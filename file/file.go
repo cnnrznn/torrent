@@ -1,8 +1,8 @@
 package file
 
 import (
+	"crypto/sha1"
 	"encoding/json"
-	"hash"
 	"log"
 	"os"
 
@@ -13,7 +13,7 @@ type Torrent struct {
 	Announce     string     `bencode:"announce"`
 	AnnounceList [][]string `bencode:"announce-list"`
 	Info         Info       `bencode:"info"`
-	InfoHash     hash.Hash
+	InfoHash     []byte
 }
 
 type Info struct {
@@ -52,7 +52,13 @@ func ReadTorrent(fn string) (*Torrent, error) {
 		return nil, err
 	}
 
-	// TODO compute InfoHash
+	// Compute InfoHash
+	h := sha1.New()
+	err = bencode.Marshal(h, torrent.Info)
+	if err != nil {
+		return nil, err
+	}
+	torrent.InfoHash = h.Sum(nil)
 
 	return &torrent, nil
 }
