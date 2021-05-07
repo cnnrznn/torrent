@@ -1,7 +1,8 @@
-package main
+package file
 
 import (
 	"encoding/json"
+	"hash"
 	"log"
 	"os"
 
@@ -12,6 +13,7 @@ type Torrent struct {
 	Announce     string     `bencode:"announce"`
 	AnnounceList [][]string `bencode:"announce-list"`
 	Info         Info       `bencode:"info"`
+	InfoHash     hash.Hash
 }
 
 type Info struct {
@@ -49,6 +51,8 @@ func ReadTorrent(fn string) (*Torrent, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// TODO compute InfoHash
 
 	return &torrent, nil
 }
