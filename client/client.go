@@ -80,6 +80,9 @@ func (c *Client) handlePeer(peer Peer) {
 		log.Println(err)
 		return
 	}
+
+	// Tell peer I'm interested
+	// Pull pieces from piece channel, try to download piece
 }
 
 func (c *Client) doHandshake(peer Peer, conn net.Conn) error {
