@@ -17,6 +17,7 @@ func New(t file.Torrent) *Client {
 	return &Client{
 		torrent: t,
 		peerID:  uuid.New().String()[:20],
+		port:    6883,
 	}
 }
 
