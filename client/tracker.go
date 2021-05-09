@@ -98,7 +98,6 @@ func SendPing(url string, tReq TrackerRequest) (*TrackerResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	log.Println(string(bs))
 
 	buf := bytes.NewBuffer(bs)
 

@@ -23,7 +23,7 @@ func New(t file.Torrent) *Client {
 
 func (c *Client) Run() {
 	tChan := make(chan TrackerResponse)
-	c.PingTracker(tChan)
+	go c.PingTracker(tChan)
 
 	for {
 		select {
