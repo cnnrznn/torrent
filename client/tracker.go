@@ -67,6 +67,9 @@ func (c *Client) PingTracker(ch chan<- TrackerResponse) {
 		if res.Interval > 0 {
 			interval = res.Interval
 		}
+		if res.MinInterval > 0 {
+			interval = res.MinInterval
+		}
 
 		event = ""
 
