@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 
@@ -20,7 +19,6 @@ func main() {
 	}
 
 	// Do torrent protocol
-	fmt.Println(torrent.Pretty())
 	client := client.New(*torrent)
 
 	client.Run()

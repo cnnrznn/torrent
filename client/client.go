@@ -9,14 +9,14 @@ import (
 
 type Client struct {
 	torrent file.Torrent
-	peerID  uuid.UUID
+	peerID  string
 	port    int
 }
 
 func New(t file.Torrent) *Client {
 	return &Client{
 		torrent: t,
-		peerID:  uuid.New(),
+		peerID:  uuid.New().String()[:20],
 	}
 }
 
