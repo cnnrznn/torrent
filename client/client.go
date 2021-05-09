@@ -1,6 +1,7 @@
 package client
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"net"
@@ -74,29 +75,41 @@ func (c *Client) handlePeer(peer Peer) {
 	}
 	defer conn.Close()
 
-	c.doHandshake(peer, conn)
+	err = c.doHandshake(peer, conn)
+	if err != nil {
+		log.Println(err)
+		return
+	}
 }
 
-func (c *Client) doHandshake(peer Peer, conn net.Conn) {
+func (c *Client) doHandshake(peer Peer, conn net.Conn) error {
 	bs := c.buildHandshake(peer)
 	log.Println("Handshake: ", string(bs))
 
+	n, err := conn.Write(bs)
+	if err != nil || n != len(bs) {
+		return err
+	}
+
 	size := make([]byte, 1)
-	n, err := conn.Read(size)
+	n, err = conn.Read(size)
 	if err != nil || n != 1 {
-		log.Println(err)
-		return
+		return err
 	}
 
 	total_size := int(size[0]) + 48
 	bs = make([]byte, total_size)
 
 	n, err = conn.Read(bs)
-	if err != nil {
-		log.Println(err)
-		return
+	if err != nil || n != len(bs) {
+		return err
 	}
-	log.Println(string(bs))
+
+	if bytes.Compare(c.torrent.InfoHash, bs[len(bs)-40:len(bs)-20]) != 0 {
+		return fmt.Errorf("Info hash doesn't match during handshake")
+	}
+
+	return nil
 }
 
 func (c *Client) buildHandshake(peer Peer) []byte {
