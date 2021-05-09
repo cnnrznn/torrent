@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"os"
+	"strings"
 
 	bencode "github.com/jackpal/bencode-go"
 )
@@ -14,6 +15,7 @@ type Torrent struct {
 	AnnounceList [][]string `bencode:"announce-list"`
 	Info         Info       `bencode:"info"`
 	InfoHash     []byte
+	Announcers   []string
 }
 
 type Info struct {
@@ -59,6 +61,15 @@ func ReadTorrent(fn string) (*Torrent, error) {
 		return nil, err
 	}
 	torrent.InfoHash = h.Sum(nil)
+
+	// TODO does this logic belong in 'client'?
+	for _, row := range torrent.AnnounceList {
+		for _, announcer := range row {
+			if strings.HasPrefix(announcer, "http") {
+				torrent.Announcers = append(torrent.Announcers, announcer)
+			}
+		}
+	}
 
 	return &torrent, nil
 }
