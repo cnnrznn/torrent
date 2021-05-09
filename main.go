@@ -11,12 +11,13 @@ import (
 func main() {
 	// Read filename from args
 	fn := os.Args[1]
-	log.Printf("Torrenting %v\n", fn)
 
 	torrent, err := file.ReadTorrent(fn)
 	if err != nil {
 		log.Fatal("Probem reading torrent: ", err)
 	}
+
+	log.Printf("Torrenting %v\n", torrent.Info.Name)
 
 	// Do torrent protocol
 	client := client.New(*torrent)
