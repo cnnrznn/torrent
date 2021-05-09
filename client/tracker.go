@@ -59,8 +59,8 @@ func (c *Client) PingTracker(url string, ch chan<- TrackerResponse) {
 
 		res, err := SendPing(url, req)
 		if err != nil {
-			log.Println(err)
-			continue
+			log.Println("Stopping tracker: ", err)
+			return
 		}
 
 		if res.Interval > 0 {
