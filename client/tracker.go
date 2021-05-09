@@ -1,24 +1,30 @@
 package client
 
 import (
+	"bytes"
+	"io"
 	"log"
+	"net/http"
 	"time"
+
+	"github.com/google/go-querystring/query"
+	"github.com/jackpal/bencode-go"
 )
 
 type TrackerRequest struct {
-	InfoHash   []byte `bencode:"info_hash"`
-	PeerID     string `bencode:"peer_id"`
-	Port       int    `bencode:"port"`
-	Uploaded   int    `bencode:"uploaded"`
-	Downloaded int    `bencode:"downloaded"`
-	Left       int    `bencode:"left"`
-	Compact    int    `bencode:"compact"`
-	NoPeerID   int    `bencode:"no_peer_id"`
-	Event      string `bencode:"event"`
+	InfoHash   string `url:"info_hash"`
+	PeerID     string `url:"peer_id"`
+	Port       int    `url:"port"`
+	Uploaded   int    `url:"uploaded"`
+	Downloaded int    `url:"downloaded"`
+	Left       int    `url:"left"`
+	Compact    int    `url:"compact"`
+	NoPeerID   int    `url:"no_peer_id"`
+	Event      string `url:"event"`
 }
 
 type TrackerResponse struct {
-	FailureReason  string `bencode:"failue reason"`
+	FailureReason  string `bencode:"failure reason"`
 	WarningMessage string `bencode:"warning message"`
 	Interval       int    `bencode:"interval"`
 	MinInterval    int    `bencode:"min interval"`
@@ -30,27 +36,73 @@ type TrackerResponse struct {
 type Peer struct {
 	ID   string `bencode:"peer id"`
 	IP   string `bencode:"ip"`
-	port int    `bencode:"port"`
+	Port int    `bencode:"port"`
 }
 
 func (c *Client) PingTracker(ch chan<- TrackerResponse) {
 	downloaded := 0
 	uploaded := 0
-	left := 0
+	left := c.torrent.Size
 	event := "started"
-	interval := 0
+	interval := 5
+	url := c.torrent.Announcers[2]
 
-	for {
-		time.Sleep(time.Duration(interval) * time.Second)
-		tr := TrackerRequest{
-			InfoHash:   c.torrent.InfoHash,
-			PeerID:     c.peerID.String(),
+	for ; ; time.Sleep(time.Duration(interval) * time.Second) {
+		req := TrackerRequest{
+			InfoHash:   string(c.torrent.InfoHash),
+			PeerID:     c.peerID,
 			Port:       c.port,
 			Downloaded: downloaded,
 			Uploaded:   uploaded,
 			Left:       left,
 			Event:      event,
 		}
-		log.Println(tr)
+
+		res, err := SendPing(url, req)
+		if err != nil {
+			log.Println(err)
+			continue
+		}
+
+		for _, peer := range res.Peers {
+			log.Println(peer.IP, peer.Port)
+		}
+		log.Println()
 	}
+}
+
+func SendPing(url string, tReq TrackerRequest) (*TrackerResponse, error) {
+	client := http.Client{}
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	vals, err := query.Values(tReq)
+	if err != nil {
+		return nil, err
+	}
+
+	req.URL.RawQuery = vals.Encode()
+
+	res, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	bs, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
+	log.Println(string(bs))
+
+	buf := bytes.NewBuffer(bs)
+
+	var tres TrackerResponse
+	err = bencode.Unmarshal(buf, &tres)
+	if err != nil {
+		return nil, err
+	}
+	return &tres, nil
 }
