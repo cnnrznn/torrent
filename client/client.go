@@ -38,7 +38,7 @@ func (c *Client) Run() {
 	for {
 		select {
 		case tr := <-tChan:
-			fmt.Printf("%+v\n", tr)
+			log.Printf("%+v\n", tr)
 			c.updatePeers(tr)
 		}
 	}
@@ -83,13 +83,14 @@ func (c *Client) handlePeer(peer Peer) {
 		return
 	}
 
+	log.Printf("Successful handshake with %+v\n", peer)
+
 	// Tell peer I'm interested
 	// Pull pieces from piece channel, try to download piece
 }
 
 func (c *Client) doHandshake(peer Peer, conn net.Conn) error {
 	bs := c.buildHandshake(peer)
-	log.Println("Handshake: ", string(bs))
 
 	n, err := conn.Write(bs)
 	if err != nil || n != len(bs) {
