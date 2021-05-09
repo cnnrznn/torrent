@@ -109,6 +109,10 @@ func (c *Client) doHandshake(peer Peer, conn net.Conn) error {
 		return fmt.Errorf("Info hash doesn't match during handshake")
 	}
 
+	if bytes.Compare([]byte(peer.ID), bs[len(bs)-20:]) != 0 {
+		return fmt.Errorf("Peer ID does not match the one provided by the tracker")
+	}
+
 	return nil
 }
 
