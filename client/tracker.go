@@ -64,10 +64,13 @@ func (c *Client) PingTracker(ch chan<- TrackerResponse) {
 			continue
 		}
 
-		for _, peer := range res.Peers {
-			log.Println(peer.IP, peer.Port)
+		if res.Interval > 0 {
+			interval = res.Interval
 		}
-		log.Println()
+
+		event = ""
+
+		ch <- *res
 	}
 }
 

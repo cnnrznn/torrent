@@ -27,8 +27,8 @@ func (c *Client) Run() {
 
 	for {
 		select {
-		case tu := <-tChan:
-			fmt.Println(tu)
+		case tr := <-tChan:
+			fmt.Printf("%+v\n", tr)
 		}
 	}
 }
