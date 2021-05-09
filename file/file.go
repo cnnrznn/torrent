@@ -16,6 +16,7 @@ type Torrent struct {
 	Info         Info       `bencode:"info"`
 	InfoHash     []byte
 	Announcers   []string
+	Size         int
 }
 
 type Info struct {
@@ -69,6 +70,10 @@ func ReadTorrent(fn string) (*Torrent, error) {
 				torrent.Announcers = append(torrent.Announcers, announcer)
 			}
 		}
+	}
+
+	for _, file := range torrent.Info.Files {
+		torrent.Size += file.Length
 	}
 
 	return &torrent, nil
