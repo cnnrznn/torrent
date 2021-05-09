@@ -39,13 +39,12 @@ type Peer struct {
 	Port int    `bencode:"port"`
 }
 
-func (c *Client) PingTracker(ch chan<- TrackerResponse) {
+func (c *Client) PingTracker(url string, ch chan<- TrackerResponse) {
 	downloaded := 0
 	uploaded := 0
 	left := c.torrent.Size
 	event := "started"
 	interval := 5
-	url := c.torrent.Announcers[2]
 
 	for ; ; time.Sleep(time.Duration(interval) * time.Second) {
 		req := TrackerRequest{

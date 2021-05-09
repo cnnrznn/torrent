@@ -30,8 +30,10 @@ func New(t file.Torrent) *Client {
 }
 
 func (c *Client) Run() {
-	tChan := make(chan TrackerResponse)
-	go c.PingTracker(tChan)
+	tChan := make(chan TrackerResponse, len(c.torrent.Announcers))
+	for _, tracker := range c.torrent.Announcers {
+		go c.PingTracker(tracker, tChan)
+	}
 
 	for {
 		select {
