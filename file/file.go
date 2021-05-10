@@ -72,9 +72,11 @@ func ReadTorrent(fn string) (*Torrent, error) {
 		}
 	}
 
-	for _, file := range torrent.Info.Files {
-		torrent.Size += file.Length
+	if len(torrent.Announcers) == 0 {
+		torrent.Announcers = []string{torrent.Announce}
 	}
+
+	torrent.Size = torrent.Info.PieceLength * len(torrent.Info.Pieces) / 20
 
 	return &torrent, nil
 }
