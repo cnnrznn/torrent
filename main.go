@@ -21,6 +21,5 @@ func main() {
 
 	// Do torrent protocol
 	client := client.New(*torrent)
-
 	client.Run()
 }
