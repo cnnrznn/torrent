@@ -33,12 +33,6 @@ type TrackerResponse struct {
 	Peers          []Peer `bencode:"peers"`
 }
 
-type Peer struct {
-	ID   string `bencode:"peer id"`
-	IP   string `bencode:"ip"`
-	Port int    `bencode:"port"`
-}
-
 func (c *Client) PingTracker(url string, ch chan<- TrackerResponse) {
 	downloaded := 0
 	uploaded := 0

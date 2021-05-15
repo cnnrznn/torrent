@@ -7,6 +7,21 @@ import (
 	"net"
 )
 
+type Peer struct {
+	ID   string `bencode:"peer id"`
+	IP   string `bencode:"ip"`
+	Port int    `bencode:"port"`
+
+	am_chocking   bool
+	am_interested bool
+	choked        bool
+	interested    bool
+
+	conn net.Conn
+
+	client *Client
+}
+
 func (c *Client) updatePeers(res TrackerResponse) {
 	c.Lock()
 	defer c.Unlock()
@@ -14,21 +29,23 @@ func (c *Client) updatePeers(res TrackerResponse) {
 	for _, peer := range res.Peers {
 		if _, ok := c.peers[peer.ID]; !ok {
 			c.peers[peer.ID] = peer
-			go c.handlePeer(peer)
+			go peer.handle()
 		}
 	}
 }
 
-func (c *Client) handlePeer(peer Peer) {
+func (p *Peer) handle() {
 	defer func() {
-		c.Lock()
-		defer c.Unlock()
+		p.client.Lock()
+		defer p.client.Unlock()
 
-		delete(c.peers, peer.ID)
+		delete(p.client.peers, p.ID)
 	}()
 
-	/*am_interested := 0
-	peer_choking := 1*/
+	p.am_chocking = true
+	p.am_interested = true
+	p.choked = true
+	p.interested = false
 
 	// Connect to peer
 	conn, err := net.Dial("tcp", fmt.Sprintf("%v:%v", peer.IP, peer.Port))
@@ -37,8 +54,9 @@ func (c *Client) handlePeer(peer Peer) {
 		return
 	}
 	defer conn.Close()
+	p.conn = conn
 
-	err = c.doHandshake(peer, conn)
+	err = p.doHandshake()
 	if err != nil {
 		log.Println(err)
 		return
@@ -47,19 +65,29 @@ func (c *Client) handlePeer(peer Peer) {
 	log.Printf("Successful handshake with %+v\n", peer)
 
 	// Tell peer I'm interested
+	c.sendInterested(conn)
+
 	// Pull pieces from piece channel, try to download piece
+	for {
+		msg, err := c.recvMsg(conn)
+		if err != nil {
+			log.Println(err)
+			break
+		}
+		c.handleMsg(*msg)
+	}
 }
 
-func (c *Client) doHandshake(peer Peer, conn net.Conn) error {
-	bs := c.buildHandshake(peer)
+func (p *Peer) doHandshake() error {
+	bs := p.buildHandshake()
 
-	n, err := conn.Write(bs)
+	n, err := p.conn.Write(bs)
 	if err != nil || n != len(bs) {
 		return err
 	}
 
 	size := make([]byte, 1)
-	n, err = conn.Read(size)
+	n, err = p.conn.Read(size)
 	if err != nil || n != 1 {
 		return err
 	}
@@ -67,12 +95,12 @@ func (c *Client) doHandshake(peer Peer, conn net.Conn) error {
 	total_size := int(size[0]) + 48
 	bs = make([]byte, total_size)
 
-	n, err = conn.Read(bs)
+	n, err = p.conn.Read(bs)
 	if err != nil || n != len(bs) {
 		return err
 	}
 
-	if bytes.Compare(c.torrent.InfoHash, bs[len(bs)-40:len(bs)-20]) != 0 {
+	if bytes.Compare(p.client.torrent.InfoHash, bs[len(bs)-40:len(bs)-20]) != 0 {
 		return fmt.Errorf("Info hash doesn't match during handshake")
 	}
 
@@ -83,13 +111,13 @@ func (c *Client) doHandshake(peer Peer, conn net.Conn) error {
 	return nil
 }
 
-func (c *Client) buildHandshake(peer Peer) []byte {
+func (p *Peer) buildHandshake() []byte {
 	bs := make([]byte, 68)
 
 	bs[0] = 19
 	copy(bs[1:], "BitTorrent protocol")
-	copy(bs[28:], c.torrent.InfoHash)
-	copy(bs[48:], []byte(c.peerID))
+	copy(bs[28:], p.client.torrent.InfoHash)
+	copy(bs[48:], []byte(p.client.peerID))
 
 	return bs
 }
