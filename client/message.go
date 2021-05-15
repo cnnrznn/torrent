@@ -17,7 +17,7 @@ func NewMsg() ([]byte, error) {
 	return nil, nil
 }
 
-func (c *Client) recvMsg(conn net.Conn) (*Message, error) {
+func (p *Peer) recvMsg(conn net.Conn) (*Message, error) {
 	lenBuf := make([]byte, 4)
 	_, err := io.ReadFull(conn, lenBuf)
 	if err != nil {
@@ -57,9 +57,8 @@ func (c *Client) recvMsg(conn net.Conn) (*Message, error) {
 	}, nil
 }
 
-func (c *Client) handleMsg(msg Message) {
+func (p *Peer) handleMsg(msg Message) {
 }
 
-func (c *Client) sendInterested(conn net.Conn) {
-
+func (p *Peer) sendInterested() {
 }

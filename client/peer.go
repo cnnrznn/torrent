@@ -22,19 +22,7 @@ type Peer struct {
 	client *Client
 }
 
-func (c *Client) updatePeers(res TrackerResponse) {
-	c.Lock()
-	defer c.Unlock()
-
-	for _, peer := range res.Peers {
-		if _, ok := c.peers[peer.ID]; !ok {
-			c.peers[peer.ID] = peer
-			go peer.handle()
-		}
-	}
-}
-
-func (p *Peer) handle() {
+func (p *Peer) Run() {
 	defer func() {
 		p.client.Lock()
 		defer p.client.Unlock()
@@ -48,7 +36,7 @@ func (p *Peer) handle() {
 	p.interested = false
 
 	// Connect to peer
-	conn, err := net.Dial("tcp", fmt.Sprintf("%v:%v", peer.IP, peer.Port))
+	conn, err := net.Dial("tcp", fmt.Sprintf("%v:%v", p.IP, p.Port))
 	if err != nil {
 		log.Println(err)
 		return
@@ -62,19 +50,14 @@ func (p *Peer) handle() {
 		return
 	}
 
-	log.Printf("Successful handshake with %+v\n", peer)
+	log.Printf("Successful handshake with %+v\n", p)
 
 	// Tell peer I'm interested
-	c.sendInterested(conn)
+	p.sendInterested()
 
 	// Pull pieces from piece channel, try to download piece
 	for {
-		msg, err := c.recvMsg(conn)
-		if err != nil {
-			log.Println(err)
-			break
-		}
-		c.handleMsg(*msg)
+		select {}
 	}
 }
 

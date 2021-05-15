@@ -42,3 +42,15 @@ func (c *Client) Run() {
 		}
 	}
 }
+
+func (c *Client) updatePeers(res TrackerResponse) {
+	c.Lock()
+	defer c.Unlock()
+
+	for _, peer := range res.Peers {
+		if _, ok := c.peers[peer.ID]; !ok {
+			c.peers[peer.ID] = peer
+			go peer.Run()
+		}
+	}
+}
