@@ -50,15 +50,12 @@ func (p *Peer) Run() {
 		return
 	}
 
-	log.Printf("Successful handshake with %+v\n", p)
+	log.Printf("Successful handshake with %v:%v\n", p.IP, p.Port)
 
 	// Tell peer I'm interested
 	p.sendInterested()
 
 	// Pull pieces from piece channel, try to download piece
-	for {
-		select {}
-	}
 }
 
 func (p *Peer) doHandshake() error {

@@ -11,7 +11,7 @@ type Client struct {
 	torrent file.Torrent
 	peerID  string
 	port    int
-	peers   map[string]Peer
+	peers   map[string]*Peer
 
 	sync.Mutex
 }
@@ -24,7 +24,7 @@ func New(t file.Torrent) *Client {
 		//peerID:  uuid.New().String()[:20],
 		peerID: string(rs),
 		port:   6883,
-		peers:  map[string]Peer{},
+		peers:  map[string]*Peer{},
 	}
 }
 
@@ -49,7 +49,8 @@ func (c *Client) updatePeers(res TrackerResponse) {
 
 	for _, peer := range res.Peers {
 		if _, ok := c.peers[peer.ID]; !ok {
-			c.peers[peer.ID] = peer
+			c.peers[peer.ID] = &peer
+			peer.client = c
 			go peer.Run()
 		}
 	}
